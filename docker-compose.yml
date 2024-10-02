@@ -1,0 +1,49 @@
+version: '3'
+services:
+  app:
+    build:
+      context: ./ansible-laravel
+      dockerfile: dockerfile
+    container_name: app
+    volumes:
+      - ./ansible-laravel:/var/www/html
+    ports:
+      - "8000:8000"  # Маппим порт Laravel сервера на хост
+    depends_on:
+      - db  # Указываем, что сервис зависит от базы данных
+    networks:
+      - laravel-network
+  
+  web:
+    image: nginx:latest
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+    ports:
+      - "80:80"
+    depends_on:
+      - app  # Указываем зависимость от приложения
+    networks:
+      - laravel-network
+
+  
+  db:
+    image: mysql:5.7
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: laravel
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"  # Подключение к базе данных
+    networks:
+      - laravel-network
+
+networks:
+  laravel-network:
+    driver: bridge
+
+volumes:
+  db_data:
